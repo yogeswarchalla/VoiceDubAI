@@ -1,0 +1,47 @@
+
+name: VoiceDubAI Android APK Build
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout project
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Extract project ZIP
+        run: |
+          unzip -q VoiceDubAI_Android_Starter.zip -d extracted
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK
+        run: |
+          sdkmanager "platforms;android-35" "build-tools;35.0.0"
+
+      - name: Add AndroidX dependency
+        run: |
+          sed -i '/dependencies {/a\    implementation("androidx.core:core:1.15.0")' extracted/VoiceDubAI_Android/app/build.gradle.kts
+
+      - name: Build APK
+        run: |
+          cd extracted/VoiceDubAI_Android
+          gradle assembleDebug --no-daemon
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: VoiceDubAI-APK
+          path: extracted/VoiceDubAI_Android/app/build/outputs/apk/debug/app-debug.apk
